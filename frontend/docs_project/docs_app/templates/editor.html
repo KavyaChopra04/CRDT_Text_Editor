@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CollabEdit - Real-time Collaborative Editor</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code&display=swap">
+    <link rel="stylesheet" href="/static/style.css">
+    <script>let lastSyncedText = ''; let currentText = '';</script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>CollabEdit</h1>
+        </div>
+        <div class="header-right">
+            <div class="connection-status">
+                <span class="status-indicator"></span>
+                <span class="status-text">Connected</span>
+            </div>
+            <div class="user-count">
+                <span class="users-online">1</span> users online
+            </div>
+        </div>
+    </header>
+    <main class="container">
+        <div class="toolbar">
+            <button class="btn-primary" id="save-btn">Save</button>
+            <button class="btn-secondary" id="share-btn">Share</button>
+            <div class="document-info">
+                <span class="doc-name">{{ document.title }}</span>
+                <span class="last-saved">Last saved: <time>{{ document.last_modified|date:"g:i A" }}</time></span>
+            </div>
+        </div>
+        <div id="editor-container">
+            <textarea id="editor">{{ document.content }}</textarea>
+            <div id="cursors-container"></div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const documentId = {{ document.id }};
+            const socket = new WebSocket(`ws://${window.location.host}/ws/edit/${documentId}/`);
+            const editor = document.getElementById('editor');
+            const cursorsContainer = document.getElementById('cursors-container');
+            let lastCursorUpdate = 0;
+            let syncInterval = 100; // 100ms sync interval
+            let isProcessingRemoteChange = false;
+            let pendingChanges = [];
+            let lastSyncedText = '';
+            let currentText = '';
+
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'cursor_update') {
+                    updateCursorPosition(data.user_id, data.position);
+                } else if (data.type === 'initial_state') {
+                    editor.value = data.content;
+                    lastSyncedText = currentText = data.content;
+                    Object.keys(data.connected_users).forEach(userId => {
+                        if (userId !== socket.user_id) {
+                            createCursor(userId);
+                        }
+                    });
+                } else if (data.type === 'text_update') {
+                    isProcessingRemoteChange = true;
+                    const currentPosition = editor.selectionStart;
+                    if (data.action === 'add') {
+                        const text = editor.value;
+                        editor.value = text.slice(0, data.index) + data.char + text.slice(data.index);
+                    } else if (data.action === 'delete') {
+                        const text = editor.value;
+                        editor.value = text.slice(0, data.index) + text.slice(data.index + 1);
+                    }
+                    editor.selectionStart = editor.selectionEnd = currentPosition;
+                    isProcessingRemoteChange = false;
+                }
+                console.log('Received message:', data);
+            };
+
+            function createCursor(userId) {
+                const cursor = document.createElement('div');
+                cursor.id = `cursor-${userId}`;
+                cursor.className = 'cursor-indicator';
+                cursor.style.backgroundColor = getRandomColor();
+
+                const label = document.createElement('div');
+                label.className = 'cursor-label';
+                label.style.backgroundColor = cursor.style.backgroundColor;
+                label.style.color = 'white';
+                label.textContent = `User ${userId.split('_')[1]}`;
+
+                cursor.appendChild(label);
+                cursorsContainer.appendChild(cursor);
+                return cursor;
+            }
+
+            function getRandomColor() {
+                const colors = ['#FF4136', '#2ECC40', '#0074D9', '#B10DC9', '#FF851B'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            function updateCursorPosition(userId, position) {
+                let cursor = document.getElementById(`cursor-${userId}`);
+                if (!cursor) {
+                    cursor = createCursor(userId);
+                }
+
+                const coordinates = getCaretCoordinates(editor, position);
+                cursor.style.left = `${coordinates.left}px`;
+                cursor.style.top = `${coordinates.top}px`;
+            }
+
+            function getCaretCoordinates(element, position) {
+                const clone = element.cloneNode(true);
+                clone.style.visibility = 'hidden';
+                clone.style.position = 'absolute';
+                document.body.appendChild(clone);
+
+                const text = clone.value;
+                clone.value = text.substr(0, position);
+                const coordinates = {
+                    left: clone.scrollLeft,
+                    top: clone.scrollTop
+                };
+
+                document.body.removeChild(clone);
+                return coordinates;
+            }
+
+            function findDifferences(oldText, newText) {
+                const changes = [];
+                let i = 0;
+                while (i < Math.max(oldText.length, newText.length)) {
+                    if (i >= oldText.length) {
+                        changes.push({
+                            action: 'add',
+                            index: i,
+                            char: newText[i]
+                        });
+                    } else if (i >= newText.length) {
+                        changes.push({
+                            action: 'delete',
+                            index: i
+                        });
+                    } else if (oldText[i] !== newText[i]) {
+                        if (newText.length > oldText.length) {
+                            changes.push({
+                                action: 'add',
+                                index: i,
+                                char: newText[i]
+                            });
+                        } else {
+                            changes.push({
+                                action: 'delete',
+                                index: i
+                            });
+                        }
+                    }
+                    i++;
+                }
+                return changes;
+            }
+
+            // Outgoing sync timer
+            setInterval(() => {
+                if (isProcessingRemoteChange) {
+                    return;
+                }
+                currentText = editor.value;
+                if (currentText !== lastSyncedText) {
+                    const changes = findDifferences(lastSyncedText, currentText);
+                    changes.forEach(change => {
+                        socket.send(JSON.stringify({
+                            'type': 'text_update',
+                            ...change
+                        }));
+                    });
+                    lastSyncedText = currentText;
+                }
+            }, syncInterval);
+
+            // Incoming sync timer
+            setInterval(() => {
+                if (pendingChanges.length > 0) {
+                    const change = pendingChanges.shift();
+                    applyChange(change);
+                }
+            }, syncInterval);
+
+            editor.addEventListener('input', (event) => {
+                const action = event.inputType === 'deleteContentBackward' ? 'delete' : 'add';
+                const character = action === 'add' ? event.data : null;
+                const index = editor.selectionStart - (action === 'delete' ? 1 : 0);
+                
+                if (isProcessingRemoteChange) {
+                    return;
+                }
+
+                socket.send(JSON.stringify({
+                    'type': 'text_update',
+                    'action': action,
+                    'char': character,
+                    'index': index
+                }));
+            });
+
+            editor.addEventListener('select', () => {
+                const now = Date.now();
+                if (now - lastCursorUpdate > cursorUpdateDelay) {
+                    lastCursorUpdate = now;
+                    socket.send(JSON.stringify({
+                        'type': 'cursor_update',
+                        'position': editor.selectionStart
+                    }));
+                }
+            });
+
+            // Add smooth scrolling for cursor following
+            editor.addEventListener('scroll', () => {
+                const cursors = document.querySelectorAll('.cursor-indicator');
+                cursors.forEach(cursor => {
+                    cursor.style.top = `${cursor.offsetTop - editor.scrollTop}px`;
+                });
+            });
+
+            // Add save functionality
+            document.getElementById('save-btn').addEventListener('click', saveDocument);
+        });
+    </script>
+</body>
+</html>
