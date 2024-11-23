@@ -14,6 +14,6 @@ testfront: headers/ConcurrentLL.hpp headers/commands.hpp bin/commands.o
 alice:
 	g++ -std=c++17 -Wall -Wextra -O2 -pthread -o bin/alice src/alice.cpp src/ConcurrentLL.cpp src/commands.cpp
 bob:
-	g++ -o bin/bob src/bob.cpp src/ConcurrentLL.cpp src/commands.cpp
+	g++ -std=c++17 -Wall -Wextra -O2 -pthread -o bin/bob src/bob.cpp src/ConcurrentLL.cpp src/commands.cpp
 clean:
 	rm bin/*

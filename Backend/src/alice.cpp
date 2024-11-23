@@ -51,6 +51,7 @@ void sendResponse(int clientSocket, const string &status, const string &body)
 
 void *FrontConnect(void *arg)
 {
+    string name = "alice";
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0)
     {
@@ -114,8 +115,10 @@ void *FrontConnect(void *arg)
 
                 cout << "Inserting " << data << " at index " << index << " with timestamp " << timestamp << endl;
 
-                Insert *cmd = new Insert(index, data, "alice", timestamp);
-                CQ.push(cmd);
+                Insert *cmd = new Insert(index, data, name, timestamp);
+                CQ.push((Command*)cmd);
+
+                cout << "Command pushed to queue, length: " << CQ.size() << endl;
 
                 sendResponse(clientSocket, "200 OK", R"({"status":"success"})");
             }
@@ -137,7 +140,7 @@ void *FrontConnect(void *arg)
         else if (method == "GET" && route == "/text")
         {
             // Get the current state and return it
-            string currentText = state.getInorderTraversal() + "foo";
+            string currentText = state.getInorderTraversal();
             sendResponse(clientSocket, "200 OK", R"({"text":")" + currentText + R"("})");
         }
         else if (method == "OPTIONS")
@@ -183,6 +186,8 @@ void *processor(void *arg)
                          sizeof(serverAddress));
     }
 
+    cout << "Connected to server" << endl;
+
     // sending data
     //  const char* message = "Hello, server!";
     //  send(clientSocket, message, strlen(message), 0);
@@ -191,12 +196,14 @@ void *processor(void *arg)
     {
         if (CQ.empty())
         {
-            continue;
+            // cout << "command queue is empty" << endl;
+            sleep(1);
+            continue;   
         }
+
         Command *lul = CQ.front();
         if (lul->this_type() == INSERT)
         {
-
             Insert *curr = (Insert *)CQ.front();
             cout << curr->payload << " this is the payload at " << curr->index << endl;
             state.insertNode(curr->index, curr->ts, curr->payload);
