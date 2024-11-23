@@ -198,3 +198,26 @@ void ConcurrentLinkedList::merge(std::vector<Node> newList)
     }
     head = result;
 }
+
+std::string ConcurrentLinkedList::serialize() const{
+   std::vector<Node> inp = getCopy();
+  std::string outp = "";
+  outp += std::to_string(inp.size());
+  outp += " ";
+  for(int i = 0;i < inp.size();i++){
+   outp.push_back(inp[i].data);
+   outp.push_back(':');
+   if(inp[i].isTombstone){
+    outp.push_back('1');
+   }
+   else{
+    outp.push_back('0');
+   }
+   outp.push_back(':');
+   outp += (inp[i].causalDot).clientUUID;
+   outp.push_back(':');
+   outp += std::to_string((inp[i].causalDot).clientTimestamp);
+  outp += " ";   
+  }
+return outp;
+}

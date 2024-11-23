@@ -15,6 +15,7 @@ class CausalDot {
         bool operator==(const CausalDot& other) const;
         std::string print();
     friend class Node;
+    friend class ConcurrentLinkedList;
 };
 
 class Node {
@@ -38,6 +39,7 @@ class ConcurrentLinkedList {
     public:
         ConcurrentLinkedList();
         std::vector<Node> getCopy() const;
+        std::string serialize() const;
         std::string getInorderTraversal() const;
         void markDeleted(int indexToDelete);
         void insertNode(int indexToInsert, CausalDot causalDot, char charToInsert);
