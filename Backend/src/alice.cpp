@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <chrono> 
 #include <queue>
 #include "../headers/ConcurrentLL.hpp"
 #include "../headers/commands.hpp"
@@ -39,14 +40,16 @@ void* FrontConnect(void* arg){
     listen(serverSocket, 1);
 
     // accepting connection request
+    cout << "Server listening" << endl;
     int clientSocket
         = accept(serverSocket, nullptr, nullptr);
-
+    cout << "Accepted Connection from frontend" << endl;
     // recieving data
 
     while(clientSocket){
+    cout << "Reading once" << endl;
     char buffer[2048] = { 0 };
-     int status = recv(clientSocket, buffer,10, 0);
+     int status = recv(clientSocket, buffer,20, 0);
      if(status == 0){break;}
      stringstream ss(buffer);
      cout << buffer << endl;
@@ -57,7 +60,9 @@ void* FrontConnect(void* arg){
         int index = stoi(word);
         ss >> word;
         char data = word[0];
-        Insert* obj = new Insert(index,data,name,clock);
+        std::chrono::nanoseconds ns = std::chrono::high_resolution_clock::now().time_since_epoch();
+        long long t = ns.count();
+        Insert* obj = new Insert(index,data,name,t);
         CQ.push((Command*)obj);
         clock++;
              cout << "command processed" << endl;
@@ -71,9 +76,23 @@ void* FrontConnect(void* arg){
              cout << "command processed" << endl;
         continue;
      }
+     if(word == "GET"){
+        std::string curr_string = state.getInorderTraversal();
+        cout << "replying to client with "<< curr_string.c_str()<< endl;
+        int bytesSent = write(clientSocket, curr_string.c_str(), curr_string.size());
+        if (bytesSent == curr_string.size())
+        {
+            std::cout<<"------ Server Response sent to client ------\n\n";
+        }
+        else
+        {
+            std::cout<<"Error sending response to client";
+        }
+     }
 
     }
     // closing the socket.
+    cout << "closed socket" << endl;
     close(serverSocket);
     return NULL;
 }
