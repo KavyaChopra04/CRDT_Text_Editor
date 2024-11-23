@@ -11,8 +11,8 @@ testserialization: headers/ConcurrentLL.hpp bin/ConcurrentLL.o
 testfront: headers/ConcurrentLL.hpp headers/commands.hpp bin/commands.o
 	g++ -o bin/front_client tests/front_client.cpp 
 	g++ -o bin/front_server src/ConcurrentLL.cpp tests/front_server.cpp src/commands.cpp
-alice: 
-	g++ -o bin/alice src/alice.cpp src/ConcurrentLL.cpp src/commands.cpp
+alice:
+	g++ -std=c++17 -Wall -Wextra -O2 -pthread -o bin/alice src/alice.cpp src/ConcurrentLL.cpp src/commands.cpp
 bob:
 	g++ -o bin/bob src/bob.cpp src/ConcurrentLL.cpp src/commands.cpp
 clean:

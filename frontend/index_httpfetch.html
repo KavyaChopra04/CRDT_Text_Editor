@@ -91,20 +91,25 @@
     <script>
         const editor = document.getElementById('text-editor');
 
-        function sendData(url, data) {
-            fetch(url, {
+        // Function to send a command to the backend
+        function sendCommand(command) {
+            fetch('http://127.0.0.1:8080', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'text/plain',
                 },
-                body: JSON.stringify(data),
+                body: command,
             })
-            .then(response => response.json())
+            .then(response => response.text())
             .then(data => {
-                // editor.value = data.text;
-            });
+                if (command === 'GET') {
+                    editor.value = data; // Update editor with fetched text
+                }
+            })
+            .catch(error => console.error('Error communicating with backend:', error));
         }
 
+        // Handle input in the editor
         editor.addEventListener('input', (event) => {
             const inputType = event.inputType;
             const data = event.data;
@@ -112,33 +117,23 @@
 
             if (inputType === 'insertText' || inputType === 'insertFromPaste') {
                 // Insert text
-                sendData('http://127.0.0.1:8080/insert', {
-                    char: data || "",
-                    index: selectionStart - (data?.length || 1)
-                });
+                const index = selectionStart - (data?.length || 1);
+                sendCommand(`INSERT ${index} ${data || ""}`);
             } else if (inputType === 'deleteContentBackward') {
                 // Delete text
-                sendData('http://127.0.0.1:8080/delete', {
-                    index: selectionStart
-                });
+                sendCommand(`DELETE ${selectionStart}`);
             } else if (inputType === 'insertLineBreak') {
                 // Handle Enter key
-                sendData('http://127.0.0.1:8080/insert', {
-                    char: '\n',
-                    index: selectionStart - 1
-                });
+                sendCommand(`INSERT ${selectionStart - 1} \\n`);
             }
         });
 
+        // Function to refresh the text in the editor
         function refreshText() {
-            fetch('http://127.0.0.1:8080/text')
-            .then(response => response.json())
-            .then(data => {
-                editor.value = data.text;
-            });
+            sendCommand('GET');
         }
 
-        // Periodically fetch text
+        // Periodically refresh text for synchronization
         setInterval(refreshText, 2000);
     </script>
 </body>
