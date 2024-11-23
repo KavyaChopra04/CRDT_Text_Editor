@@ -13,6 +13,9 @@
 #include "../headers/commands.hpp"
 // #include "lclock.hpp"
 using namespace std;
+#include <thread>   
+#include <chrono> 
+
 
 queue<Command *> CQ;
 ConcurrentLinkedList state;
@@ -194,7 +197,7 @@ void *processor(void *arg)
         if (CQ.empty())
         {
             // cout << "Queue is empty" << endl;
-            sleep(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
             continue;
         }
         Command *lul = CQ.front();
