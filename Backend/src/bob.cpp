@@ -107,9 +107,17 @@ void *FrontConnect(void *arg)
                 char data;
                 int index;
 
-                ss.ignore(256, ':'); // Skip to "char"
-                ss >> data;
-                ss >> data;
+                ss.ignore(256, ':');    // Skip to "char"
+                ss >> std::quoted(key); // Extract the quoted character as a string
+                if (!key.empty())
+                {
+                    data = key[0]; // Get the first character from the string
+                }
+                else
+                {
+                    data = '\0';
+                }
+
                 ss.ignore(256, ':'); // Skip to "index"
                 ss >> index;
 
@@ -197,7 +205,7 @@ void *processor(void *arg)
         if (CQ.empty())
         {
             // cout << "Queue is empty" << endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             continue;
         }
         Command *lul = CQ.front();

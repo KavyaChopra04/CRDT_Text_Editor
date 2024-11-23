@@ -13,9 +13,8 @@
 #include "../headers/commands.hpp"
 // #include "lclock.hpp"
 using namespace std;
-#include <thread>   
-#include <chrono> 
-
+#include <thread>
+#include <chrono>
 
 queue<Command *> CQ;
 ConcurrentLinkedList state;
@@ -107,9 +106,17 @@ void *FrontConnect(void *arg)
                 char data;
                 int index;
 
-                ss.ignore(256, ':'); // Skip to "char"
-                ss >> data;
-                ss >> data;
+                ss.ignore(256, ':');    // Skip to "char"
+                ss >> std::quoted(key); // Extract the quoted character as a string
+                if (!key.empty())
+                {
+                    data = key[0]; // Get the first character from the string
+                }
+                else
+                {
+                    data = '\0';   
+                }
+
                 ss.ignore(256, ':'); // Skip to "index"
                 ss >> index;
 
@@ -119,7 +126,7 @@ void *FrontConnect(void *arg)
                 cout << "Inserting " << data << " at index " << index << " with timestamp " << timestamp << endl;
 
                 Insert *cmd = new Insert(index, data, name, timestamp);
-                CQ.push((Command*)cmd);
+                CQ.push((Command *)cmd);
 
                 cout << "Command pushed to queue, length: " << CQ.size() << endl;
 
@@ -200,8 +207,8 @@ void *processor(void *arg)
         if (CQ.empty())
         {
             // cout << "command queue is empty" << endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            continue;   
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            continue;
         }
 
         Command *lul = CQ.front();
