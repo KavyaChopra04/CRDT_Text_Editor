@@ -176,14 +176,14 @@ void ConcurrentLinkedList::merge(std::vector<Node> newList)
         else if (list1->causalDot < list2->causalDot) 
         {
             // std::cout<<list1->causalDot.print()<<" "<<list2->causalDot.print()<<std::endl;
-            nodeToAdd = std::make_shared<Node>(*list1);
-            list1 = list1->nextNode;
+            nodeToAdd = std::make_shared<Node>(*list2);
+            list2 = list2->nextNode;
         } 
         else 
         {
             // std::cout<<list1->causalDot.print()<<" "<<list2->causalDot.print()<<std::endl;
-            nodeToAdd = std::make_shared<Node>(*list2);
-            list2 = list2->nextNode;
+            nodeToAdd = std::make_shared<Node>(*list1);
+            list1 = list1->nextNode;
         }
         if (result == nullptr) 
         {
