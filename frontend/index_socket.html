@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Text Editor</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+            color: #ffffff;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        .container {
+            background: rgba(30, 30, 30, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 800px;
+            transition: transform 0.3s ease;
+        }
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        textarea {
+            background-color: #2a2a2a;
+            border: none;
+            color: #ffffff;
+            padding: 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            width: 100%;
+            height: 300px;
+            outline: none;
+            resize: none;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+            transition: background-color 0.3s ease;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        textarea:focus {
+            background-color: #333333;
+        }
+        #toolbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        .button {
+            background: linear-gradient(90deg, #007aff, #005bb5);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-left: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        .button:hover {
+            background: linear-gradient(90deg, #005bb5, #007aff);
+            transform: translateY(-2px);
+        }
+        .button:active {
+            background: linear-gradient(90deg, #004a8d, #005bb5);
+            transform: translateY(0);
+        }
+        .placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="toolbar">
+            <button class="button" onclick="refreshText()">Refresh</button>
+        </div>
+        <textarea id="text-editor" placeholder="Start typing..."></textarea>
+    </div>
+    <script>
+        const editor = document.getElementById('text-editor');
+
+        // Establish WebSocket connection
+        const socket = new WebSocket('ws://127.0.0.1:8080');
+
+        // WebSocket event handlers
+        socket.onopen = () => {
+            console.log('Connected to the backend.');
+        };
+
+        socket.onmessage = (event) => {
+            const message = event.data;
+            console.log('Received message from backend:', message);
+
+            // Assume the backend sends the full text on GET
+            if (message.startsWith("TEXT ")) {
+                const text = message.substring(5);
+                editor.value = text;
+            }
+        };
+
+        socket.onclose = () => {
+            console.log('Disconnected from the backend.');
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        // Function to send commands to the backend
+        function sendCommand(command) {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(command);
+            } else {
+                console.error('Socket is not open. Cannot send command:', command);
+            }
+        }
+
+        // Handle text input
+        editor.addEventListener('input', (event) => {
+            const inputType = event.inputType;
+            const data = event.data;
+            const selectionStart = editor.selectionStart;
+
+            if (inputType === 'insertText' || inputType === 'insertFromPaste') {
+                // Insert text
+                const index = selectionStart - (data?.length || 1);
+                sendCommand(`INSERT ${index} ${data || ""}`);
+            } else if (inputType === 'deleteContentBackward') {
+                // Delete text
+                sendCommand(`DELETE ${selectionStart}`);
+            } else if (inputType === 'insertLineBreak') {
+                // Handle Enter key
+                sendCommand(`INSERT ${selectionStart - 1} \\n`);
+            }
+        });
+
+        // Function to refresh text from the backend
+        function refreshText() {
+            sendCommand('GET');
+        }
+
+        setInterval(refreshText, 2000);
+    </script>
+</body>
+</html>
