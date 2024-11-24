@@ -202,7 +202,7 @@ void *processor(void *arg)
         if (CQ.empty())
         {
             // cout << "command queue is empty" << endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             continue;
         }
 
