@@ -116,7 +116,7 @@ void *FrontConnect(void *arg)
                 else
                 {
                     // Handle error: key is empty
-                    data = '\0';
+                    data = ' ';
                 }
                 ss.ignore(256, ':'); // Skip to "index"
                 ss >> index;
@@ -206,7 +206,7 @@ void *processor(void *arg)
         if (CQ.empty())
         {
             // cout << "Queue is empty" << endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             continue;
         }
         Command *lul = CQ.front();

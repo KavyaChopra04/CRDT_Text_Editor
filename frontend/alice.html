@@ -111,10 +111,10 @@
                 },
                 body: JSON.stringify(data),
             })
-            .then(response => response.json())
-            .then(data => {
-                // Handle response if needed
-            });
+                .then(response => response.json())
+                .then(data => {
+                    // Handle response if needed
+                });
         }
 
         editor.addEventListener('input', (event) => {
@@ -127,10 +127,13 @@
 
             if (inputType === 'insertText' || inputType === 'insertFromPaste') {
                 // Insert text
-                sendData('http://127.0.0.1:8083/insert', {
-                    char: data || "",
-                    index: selectionStart - (data?.length || 1)
-                });
+                const charCode = data ? data.charCodeAt(0) : null;
+                if (charCode !== null) {
+                    sendData('http://127.0.0.1:8083/insert', {
+                        charCode: charCode,
+                        index: selectionStart - 1
+                    });
+                }
             } else if (inputType === 'deleteContentBackward') {
                 // Delete text
                 sendData('http://127.0.0.1:8083/delete', {
@@ -139,11 +142,12 @@
             } else if (inputType === 'insertLineBreak') {
                 // Handle Enter key
                 sendData('http://127.0.0.1:8083/insert', {
-                    char: '\n',
+                    charCode: '\n'.charCodeAt(0),
                     index: selectionStart - 1
                 });
             }
         });
+
 
         function refreshText() {
             fetch('http://127.0.0.1:8083/text')
@@ -153,7 +157,7 @@
                 const timeSinceLastInput = currentTime - lastInputTime;
 
                 // Update the editor only if more than 100ms have passed since the last input
-                if (timeSinceLastInput > 100) {
+                if (timeSinceLastInput > 1000) {
                     const cursorPosition = editor.selectionStart;
                     editor.value = data.text;
                     editor.setSelectionRange(cursorPosition, cursorPosition);
@@ -162,7 +166,7 @@
         }
 
         // Periodically fetch text
-        setInterval(refreshText, 100);
+        setInterval(refreshText, 2000);
     </script>
 </body>
 

@@ -115,7 +115,7 @@ void *FrontConnect(void *arg)
                 else
                 {
                     // Handle error: key is empty
-                    data = '\0';
+                    data = ' ';
                 }
                 ss.ignore(256, ':'); // Skip to "index"
                 ss >> index;
