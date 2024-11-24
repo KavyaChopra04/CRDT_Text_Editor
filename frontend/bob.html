@@ -95,6 +95,7 @@
 <body>
     <div class="container">
         <div id="toolbar">
+            <button class="button" id="connect-button" onclick="toggleConnection()">Disconnect</button>
             <button class="button" onclick="refreshText()">Refresh</button>
         </div>
         <textarea id="text-editor" placeholder="Start typing..."></textarea>
@@ -102,6 +103,7 @@
     <script>
         const editor = document.getElementById('text-editor');
         let lastInputTime = 0; // Initialize the last input timestamp
+        let isConnected = true; // Initial state is connected
 
         function sendData(url, data) {
             fetch(url, {
@@ -148,21 +150,29 @@
             }
         });
 
-
         function refreshText() {
             fetch('http://127.0.0.1:8083/text')
-            .then(response => response.json())
-            .then(data => {
-                const currentTime = Date.now();
-                const timeSinceLastInput = currentTime - lastInputTime;
+                .then(response => response.json())
+                .then(data => {
+                    const currentTime = Date.now();
+                    const timeSinceLastInput = currentTime - lastInputTime;
 
-                // Update the editor only if more than 100ms have passed since the last input
-                if (timeSinceLastInput > 1000) {
-                    const cursorPosition = editor.selectionStart;
-                    editor.value = data.text;
-                    editor.setSelectionRange(cursorPosition, cursorPosition);
-                }
-            });
+                    // Update the editor only if more than 100ms have passed since the last input
+                    if (timeSinceLastInput > 1000) {
+                        const cursorPosition = editor.selectionStart;
+                        editor.value = data.text;
+                        editor.setSelectionRange(cursorPosition, cursorPosition);
+                    }
+                });
+        }
+
+        function toggleConnection() {
+            const connectButton = document.getElementById('connect-button');
+            const url = isConnected ? 'http://127.0.0.1:8083/disconnect' : 'http://127.0.0.1:8083/connect';
+            sendData(url, {});
+
+            isConnected = !isConnected;
+            connectButton.textContent = isConnected ? 'Disconnect' : 'Connect';
         }
 
         // Periodically fetch text
