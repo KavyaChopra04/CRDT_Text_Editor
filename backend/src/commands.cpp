@@ -1,5 +1,5 @@
 #include "../headers/commands.hpp"
-#include "../headers/ConcurrentLL.hpp"
+#include "../headers/concurrentLL.hpp"
 Command::Command(enum Comm_types command){
     this->my_type = command;
 }

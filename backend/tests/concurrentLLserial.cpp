@@ -1,4 +1,4 @@
-#include "../headers/ConcurrentLL.hpp"
+#include "../headers/concurrentLL.hpp"
 
 int main()
 {

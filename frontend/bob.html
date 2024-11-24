@@ -129,19 +129,19 @@
                 // Insert text
                 const charCode = data ? data.charCodeAt(0) : null;
                 if (charCode !== null) {
-                    sendData('http://127.0.0.1:8080/insert', {
+                    sendData('http://127.0.0.1:8083/insert', {
                         charCode: charCode,
                         index: selectionStart - 1
                     });
                 }
             } else if (inputType === 'deleteContentBackward') {
                 // Delete text
-                sendData('http://127.0.0.1:8080/delete', {
+                sendData('http://127.0.0.1:8083/delete', {
                     index: selectionStart
                 });
             } else if (inputType === 'insertLineBreak') {
                 // Handle Enter key
-                sendData('http://127.0.0.1:8080/insert', {
+                sendData('http://127.0.0.1:8083/insert', {
                     charCode: '\n'.charCodeAt(0),
                     index: selectionStart - 1
                 });
@@ -150,7 +150,7 @@
 
 
         function refreshText() {
-            fetch('http://127.0.0.1:8080/text')
+            fetch('http://127.0.0.1:8083/text')
             .then(response => response.json())
             .then(data => {
                 const currentTime = Date.now();

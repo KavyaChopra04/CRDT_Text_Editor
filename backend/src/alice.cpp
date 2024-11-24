@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <queue>
-#include "../headers/ConcurrentLL.hpp"
+#include "../headers/concurrentLL.hpp"
 #include "../headers/commands.hpp"
 // #include "lclock.hpp"
 using namespace std;
