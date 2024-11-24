@@ -10,6 +10,7 @@
 #include <chrono>
 #include <queue>
 #include "../headers/concurrentLL.hpp"
+#include "../headers/mainports.hpp"
 #include "../headers/commands.hpp"
 // #include "lclock.hpp"
 using namespace std;
@@ -63,7 +64,7 @@ void *FrontConnect(void *arg)
 
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(8080);
+    serverAddress.sin_port = htons(ALICE_FRONTEND_ALICE_BACKEND);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
@@ -178,7 +179,7 @@ void *processor(void *arg)
     // specifying address
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(8092);
+    serverAddress.sin_port = htons(BOB_SERVER_ALICE_CLIENT);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
     // sending connection request
@@ -291,7 +292,7 @@ void *peer_server(void *arg)
     // specifying the address
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(8091);
+    serverAddress.sin_port = htons(ALICE_SERVER_BOB_CLIENT);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
     // binding socket.
