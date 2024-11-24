@@ -4,20 +4,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Collaborative Text Editor</title>
+    <title>SyncScribe - Collaborative Text Editor</title>
     <style>
         body {
             background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
             color: #ffffff;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            /* Stack elements vertically */
             align-items: center;
+            /* Center align the elements */
             height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
         }
+
+        .header {
+            width: 100%;
+            /* Make the header span the full width */
+            background: linear-gradient(90deg, #007aff, #005bb5);
+            /* Add a gradient background for emphasis */
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px 0;
+            /* Add padding for space inside the header */
+            margin: 0;
+            /* Remove margins to align it perfectly at the top */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            /* Add a slight shadow for effect */
+        }
+
 
         .container {
             background: rgba(30, 30, 30, 0.9);
@@ -27,7 +47,10 @@
             width: 100%;
             max-width: 800px;
             transition: transform 0.3s ease;
+            margin-top: 100px;
+            /* Add space above the container */
         }
+
 
         .container:hover {
             transform: translateY(-5px);
@@ -85,24 +108,101 @@
             transform: translateY(0);
         }
 
-        .placeholder {
-            color: rgba(255, 255, 255, 0.5);
-            font-style: italic;
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .modal-content {
+            background-color: #1a1a1a;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            color: #ffffff;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-content h1 {
+            font-size: 28px;
+            color: #007aff;
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .start-button {
+            background: linear-gradient(90deg, #004a8d, #005bb5);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .start-button:hover {
+            background: linear-gradient(90deg, #00733e, #00b050);
+            transform: translateY(-2px);
+        }
+
+        .start-button:active {
+            background: linear-gradient(90deg, #005a2e, #00733e);
+            transform: translateY(0);
+        }
+
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
+    <div class="modal" id="welcome-modal">
+        <div class="modal-content">
+            <h1>Welcome to SyncScribe</h1>
+            <p>A peer-to-peer collaborative text editor designed for seamless and real-time collaboration. Start your
+                journey to efficient teamwork now!</p>
+            <button class="start-button" onclick="closeModal()">Start</button>
+        </div>
+    </div>
+
+    <div class="header hidden" id="main-header">SyncScribe</div>
+    <div class="container hidden" id="main-content">
         <div id="toolbar">
+            <button class="button" id="connect-button" onclick="toggleConnection()">Disconnect</button>
             <button class="button" onclick="refreshText()">Refresh</button>
         </div>
         <textarea id="text-editor" placeholder="Start typing..."></textarea>
     </div>
+
     <script>
+        const PORT = PORT_VALUE;
         const editor = document.getElementById('text-editor');
         let lastInputTime = 0; // Initialize the last input timestamp
-        const PORT = PORT_VALUE;
+        let isConnected = true; // Initial state is connected
+
+        function closeModal() {
+            document.getElementById('welcome-modal').classList.add('hidden');
+            document.getElementById('main-header').classList.remove('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+        }
+
         function sendData(url, data) {
             fetch(url, {
                 method: 'POST',
@@ -148,21 +248,29 @@
             }
         });
 
-
         function refreshText() {
             fetch(`http://127.0.0.1:${PORT}/text`)
-            .then(response =>  response.json())
-            .then(data => {
-                const currentTime = Date.now();
-                const timeSinceLastInput = currentTime - lastInputTime;
+                .then(response => response.json())
+                .then(data => {
+                    const currentTime = Date.now();
+                    const timeSinceLastInput = currentTime - lastInputTime;
 
-                // Update the editor only if more than 100ms have passed since the last input
-                if (timeSinceLastInput > 1000) {
-                    const cursorPosition = editor.selectionStart;
-                    editor.value = data.text;
-                    editor.setSelectionRange(cursorPosition, cursorPosition);
-                }
-            });
+                    // Update the editor only if more than 100ms have passed since the last input
+                    if (timeSinceLastInput > 1000) {
+                        const cursorPosition = editor.selectionStart;
+                        editor.value = data.text;
+                        editor.setSelectionRange(cursorPosition, cursorPosition);
+                    }
+                });
+        }
+
+        function toggleConnection() {
+            const connectButton = document.getElementById('connect-button');
+            const url = isConnected ? `http://127.0.0.1:${PORT}/disconnect` : `http://127.0.0.1:${PORT}/disconnect`;
+            sendData(url, {});
+
+            isConnected = !isConnected;
+            connectButton.textContent = isConnected ? 'Disconnect' : 'Connect';
         }
 
         // Periodically fetch text
