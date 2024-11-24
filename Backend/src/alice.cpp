@@ -13,9 +13,8 @@
 #include "../headers/commands.hpp"
 // #include "lclock.hpp"
 using namespace std;
-#include <thread>   
-#include <chrono> 
-
+#include <thread>
+#include <chrono>
 
 queue<Command *> CQ;
 ConcurrentLinkedList state;
@@ -107,9 +106,17 @@ void *FrontConnect(void *arg)
                 char data;
                 int index;
 
-                ss.ignore(256, ':'); // Skip to "char"
-                ss >> data;
-                ss >> data;
+                ss.ignore(256, ':');    // Skip to "char"
+                ss >> std::quoted(key); // Extract the quoted character as a string
+                if (!key.empty())
+                {
+                    data = key[0]; // Get the first character from the string
+                }
+                else
+                {
+                    // Handle error: key is empty
+                    data = '\0';
+                }
                 ss.ignore(256, ':'); // Skip to "index"
                 ss >> index;
 
@@ -119,7 +126,7 @@ void *FrontConnect(void *arg)
                 cout << "Inserting " << data << " at index " << index << " with timestamp " << timestamp << endl;
 
                 Insert *cmd = new Insert(index, data, name, timestamp);
-                CQ.push((Command*)cmd);
+                CQ.push((Command *)cmd);
 
                 cout << "Command pushed to queue, length: " << CQ.size() << endl;
 
@@ -182,7 +189,7 @@ void *processor(void *arg)
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
     // sending connection request
-    std::cout<<"Connecting to peer"<<std::endl;
+    std::cout << "Connecting to peer" << std::endl;
     int e_code = -1;
     while (e_code == -1)
     {
@@ -203,7 +210,7 @@ void *processor(void *arg)
         {
             // cout << "command queue is empty" << endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            continue;   
+            continue;
         }
 
         Command *lul = CQ.front();
@@ -223,12 +230,12 @@ void *processor(void *arg)
         {
 
             Delete *curr = (Delete *)CQ.front();
-            //print the tree before deleting
-            std::cout<<"pre delete "<<state.getInorderTraversal()<<std::endl;
+            // print the tree before deleting
+            std::cout << "pre delete " << state.getInorderTraversal() << std::endl;
             //
-            std::cout<<"current index "<<curr->index<<std::endl;
+            std::cout << "current index " << curr->index << std::endl;
             state.markDeleted(curr->index);
-            std::cout<<"post delete "<<state.getInorderTraversal()<<std::endl;
+            std::cout << "post delete " << state.getInorderTraversal() << std::endl;
 
             string s_tree = state.serialize();
             uint32_t dataLength = htonl(s_tree.size());

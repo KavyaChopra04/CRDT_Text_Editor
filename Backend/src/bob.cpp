@@ -107,9 +107,17 @@ void *FrontConnect(void *arg)
                 char data;
                 int index;
 
-                ss.ignore(256, ':'); // Skip to "char"
-                ss >> data;
-                ss >> data;
+                ss.ignore(256, ':');    // Skip to "char"
+                ss >> std::quoted(key); // Extract the quoted character as a string
+                if (!key.empty())
+                {
+                    data = key[0]; // Get the first character from the string
+                }
+                else
+                {
+                    // Handle error: key is empty
+                    data = '\0';
+                }
                 ss.ignore(256, ':'); // Skip to "index"
                 ss >> index;
 
