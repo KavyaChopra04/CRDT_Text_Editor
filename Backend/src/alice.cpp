@@ -102,21 +102,14 @@ void *FrontConnect(void *arg)
             {
                 // Parse JSON payload for INSERT
                 stringstream ss(body);
-                string key;
+                int key;
                 char data;
                 int index;
 
                 ss.ignore(256, ':');    // Skip to "char"
-                ss >> std::quoted(key); // Extract the quoted character as a string
-                if (!key.empty())
-                {
-                    data = key[0]; // Get the first character from the string
-                }
-                else
-                {
-                    // Handle error: key is empty
-                    data = ' ';
-                }
+                //ss >> std::quoted(key); // Extract the quoted character as a string
+                ss >> key;
+                data = char(key);
                 ss.ignore(256, ':'); // Skip to "index"
                 ss >> index;
 
@@ -282,7 +275,7 @@ std::vector<Node> deserialize(std::string sen)
         getline(ns, tombstone, ':');
         getline(ns, id, ':');
         getline(ns, ts, ':');
-        char d = data[0];
+        char d = char(stoi(data));
         bool t = tombstone[0] == '1' ? true : false;
         long long time = std::stoll(ts);
         outp.push_back(Node(CausalDot(id, time), d, t));

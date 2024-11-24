@@ -269,7 +269,7 @@ std::string ConcurrentLinkedList::serialize() const{
   outp += std::to_string(inp.size());
   outp += " ";
   for(int i = 0;i < inp.size();i++){
-   outp.push_back(inp[i].data);
+   outp += std::to_string(int(inp[i].data));
    outp.push_back(':');
    if(inp[i].isTombstone){
     outp.push_back('1');
