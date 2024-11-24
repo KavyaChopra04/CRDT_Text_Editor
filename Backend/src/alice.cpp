@@ -47,7 +47,7 @@ void sendResponse(int clientSocket, const string &status, const string &body)
     response += "Access-Control-Allow-Origin: *\r\n"; // Allow all origins
     response += "Content-Length: " + to_string(body.size()) + "\r\n\r\n";
     response += body;
-   cout << response.c_str() << endl;
+   // cout << response.c_str() << endl;
     send(clientSocket, response.c_str(), response.size(), 0);
 }
 
@@ -118,12 +118,12 @@ void *FrontConnect(void *arg)
                 std::chrono::nanoseconds ns = std::chrono::high_resolution_clock::now().time_since_epoch();
                 long long timestamp = ns.count();
 
-                cout << "Inserting " << data << " at index " << index << " with timestamp " << timestamp << endl;
+                //cout << "Inserting " << data << " at index " << index << " with timestamp " << timestamp << endl;
 
                 Insert *cmd = new Insert(index, data, name, timestamp);
                 CQ.push((Command *)cmd);
 
-                cout << "Command pushed to queue, length: " << CQ.size() << endl;
+                // cout << "Command pushed to queue, length: " << CQ.size() << endl;
 
                 sendResponse(clientSocket, "200 OK", R"({"status":"success"})");
             }
@@ -208,7 +208,7 @@ void *processor(void *arg)
         if (CQ.empty())
         {
             // cout << "command queue is empty" << endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
             continue;
         }
 
@@ -216,15 +216,15 @@ void *processor(void *arg)
         if (lul->this_type() == INSERT)
         {
             Insert *curr = (Insert *)CQ.front();
-            cout << curr->payload << " this is the payload at " << curr->index << endl;
+            //cout << curr->payload << " this is the payload at " << curr->index << endl;
             state.insertNode(curr->index, curr->ts, curr->payload);
             string s_tree = state.serialize();
-            cout << s_tree << "This is the serialized tree" << endl;
+            //cout << s_tree << "This is the serialized tree" << endl;
             uint32_t dataLength = htonl(s_tree.size());
             if(connected){
             send(clientSocket, &dataLength, sizeof(uint32_t), MSG_CONFIRM);
             send(clientSocket, s_tree.c_str(), s_tree.size(), MSG_CONFIRM);
-            cout << "Inserted stuff updating remote" << endl;
+            //cout << "Inserted stuff updating remote" << endl;
             }
         }
         else if (lul->this_type() == DELETE)
@@ -232,26 +232,26 @@ void *processor(void *arg)
 
             Delete *curr = (Delete *)CQ.front();
             // print the tree before deleting
-            std::cout << "pre delete " << state.getInorderTraversal() << std::endl;
+            //std::cout << "pre delete " << state.getInorderTraversal() << std::endl;
             //
-            std::cout << "current index " << curr->index << std::endl;
+            //std::cout << "current index " << curr->index << std::endl;
             state.markDeleted(curr->index);
-            std::cout << "post delete " << state.getInorderTraversal() << std::endl;
+            //std::cout << "post delete " << state.getInorderTraversal() << std::endl;
 
             string s_tree = state.serialize();
             uint32_t dataLength = htonl(s_tree.size());
             if(connected){
             send(clientSocket, &dataLength, sizeof(uint32_t), MSG_CONFIRM);
             send(clientSocket, s_tree.c_str(), s_tree.size(), MSG_CONFIRM);
-            cout << "deleted stuff updating remote" << endl;
+            //cout << "deleted stuff updating remote" << endl;
             }
         }
         else if (lul->this_type() == MERGE)
         {
-            cout << "merging stuff" << endl;
+            //cout << "merging stuff" << endl;
             Merge *curr = (Merge *)CQ.front();
             state.merge(curr->otherList);
-            cout << state.getInorderTraversal() << endl;
+            //cout << state.getInorderTraversal() << endl;
         }
         else
         {
