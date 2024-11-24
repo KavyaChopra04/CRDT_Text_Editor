@@ -47,7 +47,7 @@ void sendResponse(int clientSocket, const string &status, const string &body)
     response += "Access-Control-Allow-Origin: *\r\n"; // Allow all origins
     response += "Content-Length: " + to_string(body.size()) + "\r\n\r\n";
     response += body;
-
+   cout << response.c_str() << endl;
     send(clientSocket, response.c_str(), response.size(), 0);
 }
 

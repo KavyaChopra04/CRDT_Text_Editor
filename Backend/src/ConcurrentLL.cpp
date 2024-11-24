@@ -125,7 +125,13 @@ std::string ConcurrentLinkedList::getInorderTraversal() const
     {
         if(!current->isTombstone)
         {
+            if(current->data == '\n'){
+            representation.push_back('\\');
+            representation.push_back('n');
+            }
+            else{
             representation.push_back(current->data);
+        }
         }
         current = current->nextNode;
     }
