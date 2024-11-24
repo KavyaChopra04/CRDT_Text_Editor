@@ -28,6 +28,7 @@ class Node {
         Node(CausalDot causalDot, char data, bool isTombstone = false, std::shared_ptr<Node> nextNode = nullptr);
         Node(const Node& a);
         char getData();
+        std::string print();
         friend class ConcurrentLinkedList;
 };
 
@@ -36,6 +37,7 @@ class ConcurrentLinkedList {
         mutable std::shared_mutex mutex; 
         //Will serve as an RW lock so that multiple threads, if needed, can read stuff. Read throughput++
         std::shared_ptr<Node> traverse(int index, bool skipTombstone = true);
+        std::shared_ptr<Node> traverseAndDelete(int index);
     public:
         ConcurrentLinkedList();
         std::vector<Node> getCopy() const;

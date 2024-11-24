@@ -52,12 +52,26 @@ char Node::getData()
 {
     return data;
 }
+
+std::string Node::print()
+{
+    std::string representation = "";
+    representation += causalDot.print();
+    representation += ", data:";
+    representation += data;
+    representation += ", tombstone : ";
+    representation += isTombstone ? "true" : "false";
+    representation += " | ";
+    return representation;
+}
 //All ConcurrentLinkedList Functions
 std::shared_ptr<Node> ConcurrentLinkedList::traverse(int index, bool skipTombstone) {
     std::shared_ptr<Node> current = head;
     int counter = 0;
+    //print nodes for debugging
     while(current != nullptr && counter < index)
     {
+        std::cout<<"counter: "<<counter<<current->print();
         if (skipTombstone && (!current->isTombstone))
         {
             counter++;
@@ -68,6 +82,23 @@ std::shared_ptr<Node> ConcurrentLinkedList::traverse(int index, bool skipTombsto
     return current;
 }
 
+std::shared_ptr<Node> ConcurrentLinkedList::traverseAndDelete(int index) {
+    std::shared_ptr<Node> current = head;
+    int counter = 0;
+    //print nodes for debugging
+    while(current != nullptr && counter <= index)
+    {
+        std::cout<<"counter: "<<counter<<current->print();
+        if ((!current->isTombstone))
+        {
+            counter++;
+        }
+        if(counter == index) break;
+        current = current->nextNode;
+    }
+    
+    return current;
+}
 
 ConcurrentLinkedList::ConcurrentLinkedList() : head(nullptr) {}
 
@@ -104,10 +135,16 @@ std::string ConcurrentLinkedList::getInorderTraversal() const
 void ConcurrentLinkedList::markDeleted(int indexToDelete) 
 {
     std::unique_lock<std::shared_mutex> lock(mutex);
-    std::shared_ptr<Node> nodeToDelete = traverse(indexToDelete);    
+    std::shared_ptr<Node> nodeToDelete = traverseAndDelete(indexToDelete + 1);  
+      
     if (nodeToDelete != nullptr) 
     {
+        std::cout<<"deleting "<<nodeToDelete->getData()<<std::endl;
         nodeToDelete->isTombstone = true;
+    }
+    else
+    {
+        std::cout<<"Node not found"<<std::endl;
     }
 }
 
@@ -152,6 +189,22 @@ void ConcurrentLinkedList::merge(std::vector<Node> newList)
     std::shared_ptr<Node> resultTail = nullptr;
     std::shared_ptr<Node> list1 = head;
     std::shared_ptr<Node> list2 = newHead;
+    //print old list
+    std::cout<<"Old list is ";
+    auto temp = list1;
+    while(temp != nullptr){
+        std::cout<<temp->causalDot.print()<<": "<<temp->getData()<<" ";
+        temp = temp->nextNode;
+    }
+    std::cout<<std::endl;
+    //print new list
+    temp = list2;
+    std::cout<<"New list is ";
+    while(temp != nullptr){
+        std::cout<<temp->causalDot.print()<<": "<<temp->getData()<<" ";
+        temp = temp->nextNode;
+    }
+    std::cout<<std::endl;
 
     while (list1 != nullptr || list2 != nullptr) {
         std::shared_ptr<Node> nodeToAdd;
@@ -170,6 +223,9 @@ void ConcurrentLinkedList::merge(std::vector<Node> newList)
         {
             // std::cout<<list2->causalDot.print()<<" "<<list2->causalDot.print()<<std::endl;
             nodeToAdd = std::make_shared<Node>(*list1);
+            if(list1->isTombstone || list2->isTombstone){
+                nodeToAdd->isTombstone = true;
+            }
             list1 = list1->nextNode;
             list2 = list2->nextNode;
         } 
@@ -197,6 +253,14 @@ void ConcurrentLinkedList::merge(std::vector<Node> newList)
         }
     }
     head = result;
+    //print merged list
+    temp = head;
+    std::cout<<"Merged list is ";
+    while(temp != nullptr){
+        std::cout<<temp->causalDot.print()<<": "<<temp->getData()<<" ";
+        temp = temp->nextNode;
+    }
+    std::cout<<std::endl;
 }
 
 std::string ConcurrentLinkedList::serialize() const{

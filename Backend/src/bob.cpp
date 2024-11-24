@@ -91,7 +91,7 @@ void *FrontConnect(void *arg)
         }
 
         string request(buffer);
-        cout << "Received request: " << request << endl; // Print the received request
+        // cout << "Received request: " << request << endl; // Print the received request
         string method, route, body;
         parseRequest(request, method, route, body);
 
@@ -177,9 +177,9 @@ void *processor(void *arg)
     // specifying address
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(8081);
+    serverAddress.sin_port = htons(8091);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
-
+    std::cout<<"Connecting to peer"<<std::endl;
     // sending connection request
     int e_code = -1;
     while (e_code == -1)
@@ -187,13 +187,14 @@ void *processor(void *arg)
         e_code = connect(clientSocket, (struct sockaddr *)&serverAddress,
                          sizeof(serverAddress));
     }
-
+    std::cout<<"Connected to peer"<<std::endl;
     // sending data
     //  const char* message = "Hello, server!";
     //  send(clientSocket, message, strlen(message), 0);
 
     while (true)
     {
+        // std::cout << "Queue size: " << CQ.size() << std::endl;
         if (CQ.empty())
         {
             // cout << "Queue is empty" << endl;
@@ -218,7 +219,12 @@ void *processor(void *arg)
         {
 
             Delete *curr = (Delete *)CQ.front();
+            // state.markDeleted(curr->index);
+            std::cout<<"pre delete "<<state.getInorderTraversal()<<std::endl;
+            //print list for debugging
+            std::cout<<"current index "<<curr->index<<std::endl;
             state.markDeleted(curr->index);
+            std::cout<<"post delete "<<state.getInorderTraversal()<<std::endl;
             string s_tree = state.serialize();
             uint32_t dataLength = htonl(s_tree.size());
             send(clientSocket, &dataLength, sizeof(uint32_t), MSG_CONFIRM);
@@ -227,7 +233,11 @@ void *processor(void *arg)
         }
         else if (lul->this_type() == MERGE)
         {
-            // cout << merging stuff << endl;
+            cout << "merging stuff" << endl;
+            for(auto x: state.getCopy())  
+            {
+                std::cout<<x.getData()<<" ";
+            }
             Merge *curr = (Merge *)CQ.front();
             state.merge(curr->otherList);
             cout << state.getInorderTraversal() << endl;
@@ -280,7 +290,7 @@ void *peer_server(void *arg)
     // specifying the address
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(8082);
+    serverAddress.sin_port = htons(8092);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
     // binding socket.

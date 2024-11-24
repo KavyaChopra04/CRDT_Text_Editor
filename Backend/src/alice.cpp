@@ -91,7 +91,7 @@ void *FrontConnect(void *arg)
         }
 
         string request(buffer);
-        cout << "Received request: " << request << endl; // Print the received request
+        // cout << "Received request: " << request << endl; // Print the received request
         string method, route, body;
         parseRequest(request, method, route, body);
 
@@ -178,10 +178,11 @@ void *processor(void *arg)
     // specifying address
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(8082);
+    serverAddress.sin_port = htons(8092);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
     // sending connection request
+    std::cout<<"Connecting to peer"<<std::endl;
     int e_code = -1;
     while (e_code == -1)
     {
@@ -197,6 +198,7 @@ void *processor(void *arg)
 
     while (true)
     {
+        // std::cout<<"Queue size: "<<CQ.size()<<std::endl;
         if (CQ.empty())
         {
             // cout << "command queue is empty" << endl;
@@ -221,7 +223,13 @@ void *processor(void *arg)
         {
 
             Delete *curr = (Delete *)CQ.front();
+            //print the tree before deleting
+            std::cout<<"pre delete "<<state.getInorderTraversal()<<std::endl;
+            //
+            std::cout<<"current index "<<curr->index<<std::endl;
             state.markDeleted(curr->index);
+            std::cout<<"post delete "<<state.getInorderTraversal()<<std::endl;
+
             string s_tree = state.serialize();
             uint32_t dataLength = htonl(s_tree.size());
             send(clientSocket, &dataLength, sizeof(uint32_t), MSG_CONFIRM);
@@ -230,7 +238,7 @@ void *processor(void *arg)
         }
         else if (lul->this_type() == MERGE)
         {
-            // cout << merging stuff << endl;
+            cout << "merging stuff" << endl;
             Merge *curr = (Merge *)CQ.front();
             state.merge(curr->otherList);
             cout << state.getInorderTraversal() << endl;
@@ -283,7 +291,7 @@ void *peer_server(void *arg)
     // specifying the address
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(8081);
+    serverAddress.sin_port = htons(8091);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
     // binding socket.
