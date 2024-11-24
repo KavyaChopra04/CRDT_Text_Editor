@@ -142,16 +142,12 @@
         });
 
         function refreshText() {
-            // Save the current cursor position
-            const cursorPosition = editor.selectionStart;
 
             fetch('http://127.0.0.1:8083/text')
                 .then(response => response.json())
                 .then(data => {
-                    // Update the textarea's value
+                    const cursorPosition = editor.selectionStart;
                     editor.value = data.text;
-
-                    // Restore the cursor position
                     editor.setSelectionRange(cursorPosition, cursorPosition);
                 });
         }
