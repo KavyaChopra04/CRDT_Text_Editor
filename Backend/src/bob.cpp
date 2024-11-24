@@ -20,7 +20,7 @@ using namespace std;
 
 queue<Command *> CQ;
 ConcurrentLinkedList state;
-
+bool connected = true;
 std::string parseRequest(const std::string &request, std::string &method, std::string &route, std::string &body)
 {
     stringstream ss(request);
@@ -141,6 +141,10 @@ void *FrontConnect(void *arg)
 
                 sendResponse(clientSocket, "200 OK", R"({"status":"success"})");
             }
+            else if (route == "/disconnect"){
+                sendResponse(clientSocket, "200 OK", R"({"status":"success"})");
+                connected = !connected;
+            }
         }
         else if (method == "GET" && route == "/text")
         {
@@ -213,9 +217,11 @@ void *processor(void *arg)
             string s_tree = state.serialize();
             cout << s_tree << "This is the serialized tree" << endl;
             uint32_t dataLength = htonl(s_tree.size());
+            if(connected){
             send(clientSocket, &dataLength, sizeof(uint32_t), MSG_CONFIRM);
             send(clientSocket, s_tree.c_str(), s_tree.size(), MSG_CONFIRM);
             cout << "Inserted stuff updating remote" << endl;
+            }
         }
         else if (lul->this_type() == DELETE)
         {
@@ -229,9 +235,11 @@ void *processor(void *arg)
             std::cout<<"post delete "<<state.getInorderTraversal()<<std::endl;
             string s_tree = state.serialize();
             uint32_t dataLength = htonl(s_tree.size());
+            if(connected){
             send(clientSocket, &dataLength, sizeof(uint32_t), MSG_CONFIRM);
             send(clientSocket, s_tree.c_str(), s_tree.size(), MSG_CONFIRM);
             cout << "deleted stuff updating remote" << endl;
+            }
         }
         else if (lul->this_type() == MERGE)
         {
@@ -311,6 +319,10 @@ void *peer_server(void *arg)
 
     while (true)
     {
+        if(!connected){
+            sleep(1);
+            continue;
+        }
         uint32_t dataLength;
         int stat = recv(clientSocket, &dataLength, sizeof(uint32_t), 0); // Receive the message length
         if (stat == 0)
