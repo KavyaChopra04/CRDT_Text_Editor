@@ -1,7 +1,7 @@
 concurrentLL: headers/ConcurrentLL.hpp src/ConcurrentLL.cpp
-	g++ -c src/ConcurrentLL.cpp -o bin/ConcurrentLL.o
+	g++ -c src/ConcurrentLL.cpp -std=c++17 -Wall -Wextra -O2 -pthread -o bin/ConcurrentLL.o
 commands: concurrentLL headers/commands.hpp  headers/ConcurrentLL.hpp src/commands.cpp bin/ConcurrentLL.o
-	g++ -o bin/commands.o  -c bin/ConcurrentLL.o src/commands.cpp
+	g++ -std=c++17 -Wall -Wextra -O2 -pthread -o bin/commands.o  -c bin/ConcurrentLL.o src/commands.cpp
 testconcurrentLL: headers/ConcurrentLL.hpp bin/ConcurrentLL.o
 	g++ -o bin/ConcurrentLLSerialTest bin/ConcurrentLL.o tests/ConcurrentLLserial.cpp
 	./bin/ConcurrentLLSerialTest
