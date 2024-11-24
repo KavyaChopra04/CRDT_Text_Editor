@@ -101,6 +101,7 @@
     </div>
     <script>
         const editor = document.getElementById('text-editor');
+        let lastInputTime = 0; // Initialize the last input timestamp
 
         function sendData(url, data) {
             fetch(url, {
@@ -110,10 +111,10 @@
                 },
                 body: JSON.stringify(data),
             })
-                .then(response => response.json())
-                .then(data => {
-                    // editor.value = data.text;
-                });
+            .then(response => response.json())
+            .then(data => {
+                // Handle response if needed
+            });
         }
 
         editor.addEventListener('input', (event) => {
@@ -121,20 +122,23 @@
             const data = event.data;
             const selectionStart = editor.selectionStart;
 
+            // Update the last input timestamp
+            lastInputTime = Date.now();
+
             if (inputType === 'insertText' || inputType === 'insertFromPaste') {
                 // Insert text
-                sendData('http://127.0.0.1:8080/insert', {
+                sendData('http://127.0.0.1:8083/insert', {
                     char: data || "",
                     index: selectionStart - (data?.length || 1)
                 });
             } else if (inputType === 'deleteContentBackward') {
                 // Delete text
-                sendData('http://127.0.0.1:8080/delete', {
+                sendData('http://127.0.0.1:8083/delete', {
                     index: selectionStart
                 });
             } else if (inputType === 'insertLineBreak') {
                 // Handle Enter key
-                sendData('http://127.0.0.1:8080/insert', {
+                sendData('http://127.0.0.1:8083/insert', {
                     char: '\n',
                     index: selectionStart - 1
                 });
@@ -142,16 +146,20 @@
         });
 
         function refreshText() {
-
             fetch('http://127.0.0.1:8083/text')
-                .then(response => response.json())
-                .then(data => {
+            .then(response => response.json())
+            .then(data => {
+                const currentTime = Date.now();
+                const timeSinceLastInput = currentTime - lastInputTime;
+
+                // Update the editor only if more than 100ms have passed since the last input
+                if (timeSinceLastInput > 100) {
                     const cursorPosition = editor.selectionStart;
                     editor.value = data.text;
                     editor.setSelectionRange(cursorPosition, cursorPosition);
-                });
+                }
+            });
         }
-
 
         // Periodically fetch text
         setInterval(refreshText, 100);
