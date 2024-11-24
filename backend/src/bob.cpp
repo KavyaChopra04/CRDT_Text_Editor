@@ -75,7 +75,7 @@ void *FrontConnect(void *arg)
     }
 
     listen(serverSocket, 10);
-    cout << "Server listening on port 8083" << endl;
+    // cout << "Server listening on port 8083" << endl;
 
     while (true)
     {
@@ -96,7 +96,7 @@ void *FrontConnect(void *arg)
         string method, route, body;
         parseRequest(request, method, route, body);
 
-        cout << "Method: " << method << ", Route: " << route << ", Body: " << body << endl; // Print parsed details
+        // cout << "Method: " << method << ", Route: " << route << ", Body: " << body << endl; // Print parsed details
 
         if (method == "POST")
         {
@@ -118,12 +118,12 @@ void *FrontConnect(void *arg)
                 std::chrono::nanoseconds ns = std::chrono::high_resolution_clock::now().time_since_epoch();
                 long long timestamp = ns.count();
 
-                cout << "Inserting " << data << " at index " << index << " with timestamp " << timestamp << endl;
+                // cout << "Inserting " << data << " at index " << index << " with timestamp " << timestamp << endl;
 
                 Insert *cmd = new Insert(index, data, name, timestamp);
                 CQ.push((Command*)cmd);
 
-                cout << "Command pushed to queue, length: " << CQ.size() << endl;
+                // cout << "Command pushed to queue, length: " << CQ.size() << endl;
 
                 sendResponse(clientSocket, "200 OK", R"({"status":"success"})");
             }
@@ -181,7 +181,7 @@ void *processor(void *arg)
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8091);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
-    std::cout<<"Connecting to peer"<<std::endl;
+    // std::cout<<"Connecting to peer"<<std::endl;
     // sending connection request
     int e_code = -1;
     while (e_code == -1)
@@ -189,7 +189,7 @@ void *processor(void *arg)
         e_code = connect(clientSocket, (struct sockaddr *)&serverAddress,
                          sizeof(serverAddress));
     }
-    std::cout<<"Connected to peer"<<std::endl;
+    // std::cout<<"Connected to peer"<<std::endl;
     // sending data
     //  const char* message = "Hello, server!";
     //  send(clientSocket, message, strlen(message), 0);
@@ -208,45 +208,45 @@ void *processor(void *arg)
         {
 
             Insert *curr = (Insert *)CQ.front();
-            cout << curr->payload << " this is the payload at " << curr->index << endl;
+            // cout << curr->payload << " this is the payload at " << curr->index << endl;
             state.insertNode(curr->index, curr->ts, curr->payload);
             string s_tree = state.serialize();
-            cout << s_tree << "This is the serialized tree" << endl;
+            // cout << s_tree << "This is the serialized tree" << endl;
             uint32_t dataLength = htonl(s_tree.size());
             send(clientSocket, &dataLength, sizeof(uint32_t), MSG_CONFIRM);
             send(clientSocket, s_tree.c_str(), s_tree.size(), MSG_CONFIRM);
-            cout << "Inserted stuff updating remote" << endl;
+            // cout << "Inserted stuff updating remote" << endl;
         }
         else if (lul->this_type() == DELETE)
         {
 
             Delete *curr = (Delete *)CQ.front();
             // state.markDeleted(curr->index);
-            std::cout<<"pre delete "<<state.getInorderTraversal()<<std::endl;
+            // std::cout<<"pre delete "<<state.getInorderTraversal()<<std::endl;
             //print list for debugging
-            std::cout<<"current index "<<curr->index<<std::endl;
+            // std::cout<<"current index "<<curr->index<<std::endl;
             state.markDeleted(curr->index);
-            std::cout<<"post delete "<<state.getInorderTraversal()<<std::endl;
+            // std::cout<<"post delete "<<state.getInorderTraversal()<<std::endl;
             string s_tree = state.serialize();
             uint32_t dataLength = htonl(s_tree.size());
             send(clientSocket, &dataLength, sizeof(uint32_t), MSG_CONFIRM);
             send(clientSocket, s_tree.c_str(), s_tree.size(), MSG_CONFIRM);
-            cout << "deleted stuff updating remote" << endl;
+            // cout << "deleted stuff updating remote" << endl;
         }
         else if (lul->this_type() == MERGE)
         {
-            cout << "merging stuff" << endl;
-            for(auto x: state.getCopy())  
-            {
-                std::cout<<x.getData()<<" ";
-            }
+            // cout << "merging stuff" << endl;
+            // for(auto x: state.getCopy())  
+            // {
+            //     std::cout<<x.getData()<<" ";
+            // }
             Merge *curr = (Merge *)CQ.front();
             state.merge(curr->otherList);
-            cout << state.getInorderTraversal() << endl;
+            // cout << state.getInorderTraversal() << endl;
         }
         else
         {
-            cout << "Unknown command" << endl;
+            // cout << "Unknown command" << endl;
         }
         delete CQ.front();
         CQ.pop();
@@ -305,7 +305,7 @@ void *peer_server(void *arg)
     // accepting connection request
     int clientSocket = accept(serverSocket, nullptr, nullptr);
 
-    cout << "Connected to peer" << endl;
+    // cout << "Connected to peer" << endl;
 
     // recieving data
 
@@ -345,6 +345,6 @@ int main()
     pthread_join(front, NULL);
     pthread_join(back_client, NULL);
     pthread_join(back_server, NULL);
-    cout << state.getInorderTraversal() << endl;
+    // cout << state.getInorderTraversal() << endl;
     return 0;
 }
