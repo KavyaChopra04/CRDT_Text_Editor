@@ -168,7 +168,7 @@
 
         function toggleConnection() {
             const connectButton = document.getElementById('connect-button');
-            const url = isConnected ? 'http://127.0.0.1:8083/disconnect' : 'http://127.0.0.1:8083/connect';
+            const url = isConnected ? 'http://127.0.0.1:8083/disconnect' : 'http://127.0.0.1:8083/disconnect';
             sendData(url, {});
 
             isConnected = !isConnected;
