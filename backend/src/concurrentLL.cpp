@@ -71,7 +71,7 @@ std::shared_ptr<Node> ConcurrentLinkedList::traverse(int index, bool skipTombsto
     //print nodes for debugging
     while(current != nullptr && counter < index)
     {
-        std::cout<<"counter: "<<counter<<current->print();
+        //std::cout<<"counter: "<<counter<<current->print();
         if (skipTombstone && (!current->isTombstone))
         {
             counter++;
@@ -88,7 +88,7 @@ std::shared_ptr<Node> ConcurrentLinkedList::traverseAndDelete(int index) {
     //print nodes for debugging
     while(current != nullptr && counter <= index)
     {
-        std::cout<<"counter: "<<counter<<current->print();
+        //std::cout<<"counter: "<<counter<<current->print();
         if ((!current->isTombstone))
         {
             counter++;
@@ -145,7 +145,7 @@ void ConcurrentLinkedList::markDeleted(int indexToDelete)
       
     if (nodeToDelete != nullptr) 
     {
-        std::cout<<"deleting "<<nodeToDelete->getData()<<std::endl;
+        //std::cout<<"deleting "<<nodeToDelete->getData()<<std::endl;
         nodeToDelete->isTombstone = true;
     }
     else
@@ -196,20 +196,20 @@ void ConcurrentLinkedList::merge(std::vector<Node> newList)
     std::shared_ptr<Node> list1 = head;
     std::shared_ptr<Node> list2 = newHead;
     //print old list
-    std::cout<<"Old list is ";
+    //std::cout<<"Old list is ";
     auto temp = list1;
     while(temp != nullptr){
-        std::cout<<temp->causalDot.print()<<": "<<temp->getData()<<" ";
+        //std::cout<<temp->causalDot.print()<<": "<<temp->getData()<<" ";
         temp = temp->nextNode;
     }
-    std::cout<<std::endl;
+    //std::cout<<std::endl;
     //print new list
     temp = list2;
-    std::cout<<"New list is ";
-    while(temp != nullptr){
-        std::cout<<temp->causalDot.print()<<": "<<temp->getData()<<" ";
-        temp = temp->nextNode;
-    }
+    // std::cout<<"New list is ";
+    // while(temp != nullptr){
+    //     std::cout<<temp->causalDot.print()<<": "<<temp->getData()<<" ";
+    //     temp = temp->nextNode;
+    // }
     std::cout<<std::endl;
 
     while (list1 != nullptr || list2 != nullptr) {
@@ -261,12 +261,12 @@ void ConcurrentLinkedList::merge(std::vector<Node> newList)
     head = result;
     //print merged list
     temp = head;
-    std::cout<<"Merged list is ";
+    //std::cout<<"Merged list is ";
     while(temp != nullptr){
-        std::cout<<temp->causalDot.print()<<": "<<temp->getData()<<" ";
+        //std::cout<<temp->causalDot.print()<<": "<<temp->getData()<<" ";
         temp = temp->nextNode;
     }
-    std::cout<<std::endl;
+    //std::cout<<std::endl;
 }
 
 std::string ConcurrentLinkedList::serialize() const{
